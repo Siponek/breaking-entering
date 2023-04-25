@@ -1,0 +1,4 @@
+**/secvenv
+**.vscode
+**/*.tar.gz
+**/*.html
