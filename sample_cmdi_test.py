@@ -171,14 +171,19 @@ class TestingClass:
     async def test_step(self, test_value: str, url_for_request: str) -> bool:
         """Function for testing a single test case"""
         # return random.choice([True, False])
+        wololo = await define_testing_type(testing_route=url_for_request)
+        # tqdm.write(wololo[0])
+        # tqdm.write(wololo[1])
         cookies: dict = {"a": "1"}
         headers: dict = {}
-        params: dict = {self.test_route[1]: test_value}
+        params: dict = {wololo[1]: test_value}
+        # params: dict = {self.test_route[1]: test_value}
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.get(
                     url=url_for_request,
                     params=params,
+                    # params=params,
                     cookies=cookies,
                     headers=headers,
                 ) as response:

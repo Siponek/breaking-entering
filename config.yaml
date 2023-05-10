@@ -1,16 +1,17 @@
 !!map
 variables:
   !!map
+  # Test string to look for in response text
   user_name: !!str szymon_ubuntu
+  # Name of the command to recieve user_name. 
+  command: !!str whoami
   folder_to_watch: !!str /etc/passwd
-  # query_params: !!seq [host, input, name ]
   query_params:
     !!map
     ping: host 
     find: input 
     echo : name
     exec : input
-  command: !!str whoami
   base_url: !!str http://localhost:9000/
 command_injection:
   !!map
