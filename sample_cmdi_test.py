@@ -6,6 +6,7 @@ import pathlib
 import yaml
 import pprint
 import asyncio
+import aiohttp
 import random
 from typing import Self
 from tqdm import tqdm
@@ -108,7 +109,6 @@ class TestingClass:
 
     def calculate_total_tests(self) -> Self:
         for route in self.test_report:
-            tqdm.write(f"route {route} {self.test_report[route]}")
             self.test_report[route]["total_tests"] = (
                 len(self.test_report[route]) - 1
             )
@@ -124,7 +124,7 @@ class TestingClass:
         # self._reset()
         return self
 
-    def test_suite(
+    async def test_suite(
         self,
         array_of_dicts: list,
         file_route: str,
@@ -143,55 +143,61 @@ class TestingClass:
                 colour="CYAN",
                 leave=False,
             ) as pbar2:
+                tasks = []
                 for test_type, test_value in test_dict.items():
                     if test_type != route_type[0]:
                         pbar2.update(1)
                         continue
                     for test in test_value:
-                        pbar2.set_description(
-                            f"Testing:{Fore.GREEN + Style.BRIGHT}{test_type} {test}{Fore.RESET + Style.RESET_ALL}"
+                        task = asyncio.create_task(
+                            self.test_step(
+                                test_value=test_value[test],
+                                url_for_request=http_adress + file_route,
+                            )
                         )
-                        test_result = self.test_step(
-                            test_value=test_value[test],
-                            url_for_request=http_adress + file_route,
-                        )
-                        self.append_to_report(
-                            route=file_route,
-                            test_name=test_type + " " + test,
-                            test_result=test_result,
-                        )
-                        pbar2.update(1)
+                        task.add_done_callback(lambda fut: pbar2.update(1))
+                        tasks.append((task, test_type, test))
+                await asyncio.gather(*[task for task, _, _ in tasks])
+                for task, test_type, test in tasks:
+                    test_result = task.result()
+                    self.append_to_report(
+                        route=file_route,
+                        test_name=test_type + " " + test,
+                        test_result=test_result,
+                    )
             pbar2.close()
-            # self.secondary_position += 1
         return self
 
-    def test_step(self, test_value: str, url_for_request: str) -> bool:
+    async def test_step(self, test_value: str, url_for_request: str) -> bool:
         """Function for testing a single test case"""
         # return random.choice([True, False])
         cookies: dict = {"a": "1"}
         headers: dict = {}
         params: dict = {self.test_route[1]: test_value}
-        response: requests.Response = requests.Response()
-        try:
-            response = requests.get(
-                url=url_for_request,
-                params=params,
-                cookies=cookies,
-                headers=headers,
-            )
-        except requests.exceptions.ConnectionError:
-            tqdm.write("Connection error. Check if the server is running.")
-            exit()
-        return not WHOAMI_ORACLE in response.text
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(
+                    url=url_for_request,
+                    params=params,
+                    cookies=cookies,
+                    headers=headers,
+                ) as response:
+                    text = await response.text()
+                    tqdm.write(
+                        f"Testing {params} {Fore.MAGENTA + url_for_request.split('/')[-1] + Fore.RESET} response:\t\t{Fore.GREEN + text + Fore.RESET}"
+                    )
+                return not WHOAMI_ORACLE in text
+            except aiohttp.ClientError:
+                tqdm.write("Connection error. Check if the server is running.")
+                exit()
 
     def _reset(self) -> Self:
-        "I have messed up somewhere and the tests are calculating incorrectly. This is a quick fix."
         self.test_report = {}
         self.secondary_position = 1
         return self
 
 
-def define_testing_type(testing_route: str) -> list:
+async def define_testing_type(testing_route: str) -> list:
     if testing_route.find("echo") != -1:
         return ["echo", QUERY_PARAMS["echo"]]
     elif testing_route.find("ping") != -1:
@@ -229,27 +235,30 @@ async def main(*args, **kwargs):
         if path.is_file()
         and path.suffix == ".php"
         and path.name not in ["index.php", "router.php"]
+        and path.name.find("webshell") == -1
     ]
     # TODO make this async for every route
     with tqdm(total=len(list_of_routes_in_folder), position=0) as pbar1:
+        tasks = []
         for testing_route in list_of_routes_in_folder:
-            route_type: list = []
-            try:
-                route_type = define_testing_type(testing_route)
-            except ValueError as errno:
-                tqdm.write(f"Error: {errno}")
-                continue
             pbar1.set_description(
                 f"Testing route: \033[1m{testing_route}\033[0m"
             )
-            pbar1.update(1)
+            task = asyncio.create_task(
+                TestClass.test_suite(
+                    array_of_dicts=array_of_tests,
+                    http_adress=HTTP_BASE,
+                    file_route=testing_route,
+                    route_type=await define_testing_type(testing_route),
+                )
+            )
+            task.add_done_callback(lambda fut: pbar1.update(1))
+            tasks.append((task))
             # Here the http_adress could be the base attr for the class since it is global and read from config.yaml
-            TestClass.test_suite(
-                array_of_dicts=array_of_tests,
-                http_adress=HTTP_BASE,
-                file_route=testing_route,
-                route_type=route_type,
-            ).calcualte_passed_tests(route=testing_route)
+        await asyncio.gather(*[task for task in tasks])
+        for testing_route in list_of_routes_in_folder:
+            print(f"Calculating passed tests for {testing_route}")
+            TestClass.calcualte_passed_tests(route=testing_route)
         TestClass.calculate_total_tests().calculate_passed_tests_percentage()
         pbar1.close()
     for route, values in TestClass.test_report.items():
@@ -273,12 +282,14 @@ async def main(*args, **kwargs):
     total_tests_ran: int = 0
     print(f"Overall suite result:")
     for route, values in TestClass.test_report.items():
-        print(
-            f"\033[1m{route}\033[0m has {values['passed_tests']} tests passed out of {values['total_tests']}"
-        )
+        # print(
+        #     f"\033[1m{route}\033[0m has {values['passed_tests']} tests passed out of {values['total_tests']}"
+        # )
         result += values["passed_tests"]
         total_tests_ran += values["total_tests"]
-    print(f"{MARKS['checkmark']} Passed {result} out of {total_tests_ran}")
+    print(
+        f"{MARKS['checkmark']} Passed {result} out of {total_tests_ran} := {round(result/total_tests_ran*100)}%"
+    )
 
 
 if __name__ == "__main__":
