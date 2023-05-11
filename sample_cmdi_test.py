@@ -23,6 +23,8 @@ QUERY_PARAMS: dict
 COMMAND_INJECTION_CMD: dict
 ARGUMENT_INJECTION_CMD: dict
 BLIND_COMMAND_INJECTION_CMD: dict
+VERBOSE_MODE: bool = False
+CONFIG_PATH: str = "config.yaml"
 XSS_CMD: dict
 MARKS: dict = {
     "checkmark": "\u2705",
@@ -45,7 +47,6 @@ def process_config_file(config_file_path: str) -> dict:
         # Get the variable values
         user_name: str = attack_config["variables"]["user_name"]
         folder_to_watch: str = attack_config["variables"]["folder_to_watch"]
-        # query_params: list = attack_config["variables"]["query_params"]
         command: str = attack_config["variables"]["command"]
         replaced_config: dict = {}
         for attack_type in attack_config.keys():
@@ -102,7 +103,6 @@ class TestingClass:
     def calcualte_passed_tests(self, route: str) -> Self:
         self.test_report[route]["passed_tests"] = 0
         for test in self.test_report[route]:
-            # tqdm.write(f"test {test} {self.test_report[test]}")
             if self.test_report[route][test] and test != "passed_tests":
                 self.test_report[route]["passed_tests"] += 1
         return self
@@ -121,7 +121,6 @@ class TestingClass:
                 / self.test_report[route]["total_tests"]
                 * 100
             )
-        # self._reset()
         return self
 
     async def test_suite(
@@ -170,27 +169,23 @@ class TestingClass:
 
     async def test_step(self, test_value: str, url_for_request: str) -> bool:
         """Function for testing a single test case"""
-        # return random.choice([True, False])
         wololo = await define_testing_type(testing_route=url_for_request)
-        # tqdm.write(wololo[0])
-        # tqdm.write(wololo[1])
         cookies: dict = {"a": "1"}
         headers: dict = {}
         params: dict = {wololo[1]: test_value}
-        # params: dict = {self.test_route[1]: test_value}
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.get(
                     url=url_for_request,
                     params=params,
-                    # params=params,
                     cookies=cookies,
                     headers=headers,
                 ) as response:
                     text = await response.text()
-                    tqdm.write(
-                        f"Testing {params} {Fore.MAGENTA + url_for_request.split('/')[-1] + Fore.RESET} response:\t\t{Fore.GREEN + text + Fore.RESET}"
-                    )
+                    if VERBOSE_MODE:
+                        tqdm.write(
+                            f"Testing {params} {Fore.MAGENTA + url_for_request.split('/')[-1] + Fore.RESET} response:\t\t{Fore.GREEN + text + Fore.RESET}"
+                        )
                 return not WHOAMI_ORACLE in text
             except aiohttp.ClientError:
                 tqdm.write("Connection error. Check if the server is running.")
@@ -225,8 +220,41 @@ async def update_progress_bar(pbar_test, passed_tests, total_tests):
         await asyncio.sleep(0.1)
 
 
-async def main(*args, **kwargs):
+def calc_overall_result(test_report_dict: dict) -> None:
+    result: int = 0
+    total_tests_ran: int = 0
+    print(f"Overall suite result:")
+    for route, values in test_report_dict.items():
+        result += values["passed_tests"]
+        total_tests_ran += values["total_tests"]
+    print(
+        f"{MARKS['checkmark']} Passed {result} out of {total_tests_ran} := {round(result/total_tests_ran*100)}%"
+    )
+
+
+def print_test_report(test_report_dict: dict) -> None:
+    for route, values in test_report_dict.items():
+        print(
+            f"\033[1m{route}\033[0m",
+        )
+        pbar_test = tqdm(
+            # passed_test is always 1 less than total_tests beacuse of the passed_tests key
+            total=values["total_tests"],
+            position=1,
+            colour="GREEN",
+            leave=True,
+            initial=values["passed_tests"],
+            disable=not values["passed_tests"] and not values["total_tests"],
+            desc=f"{MARKS['checkmark']}Passed {values['passed_tests']} out of {values['total_tests']}",
+        )
+        pbar_test.close()
+        print(f"\n{MARKS['failmark']} Falied tests:")
+        pp.pprint([x for x in values if not values[x]])
+
+
+async def main(args):
     """Main function for running the tests"""
+
     TestClass: TestingClass = TestingClass()
     array_of_tests: list = [
         COMMAND_INJECTION_CMD,
@@ -266,41 +294,37 @@ async def main(*args, **kwargs):
             TestClass.calcualte_passed_tests(route=testing_route)
         TestClass.calculate_total_tests().calculate_passed_tests_percentage()
         pbar1.close()
-    for route, values in TestClass.test_report.items():
-        print(
-            f"\033[1m{route}\033[0m",
-        )
-        pbar_test = tqdm(
-            # passed_test is always 1 less than total_tests beacuse of the passed_tests key
-            total=values["total_tests"],
-            position=1,
-            colour="GREEN",
-            leave=True,
-            initial=values["passed_tests"],
-            disable=not values["passed_tests"] and not values["total_tests"],
-            desc=f"{MARKS['checkmark']}Passed {values['passed_tests']} out of {values['total_tests']}",
-        )
-        pbar_test.close()
-        print(f"\n{MARKS['failmark']} Falied tests:")
-        pp.pprint([x for x in values if not values[x]])
-    result: int = 0
-    total_tests_ran: int = 0
-    print(f"Overall suite result:")
-    for route, values in TestClass.test_report.items():
-        # print(
-        #     f"\033[1m{route}\033[0m has {values['passed_tests']} tests passed out of {values['total_tests']}"
-        # )
-        result += values["passed_tests"]
-        total_tests_ran += values["total_tests"]
-    print(
-        f"{MARKS['checkmark']} Passed {result} out of {total_tests_ran} := {round(result/total_tests_ran*100)}%"
-    )
+
+    print_test_report(test_report_dict=TestClass.test_report)
+    calc_overall_result(test_report_dict=TestClass.test_report)
 
 
 if __name__ == "__main__":
-    import sys
+    # import sys
+    import argparse
+    from pathlib import Path
 
-    yaml_config = process_config_file("config.yaml")
+    parser = argparse.ArgumentParser(
+        description="Script to run the tests specified in the config file. Config file must be names "
+    )
+    parser.add_argument(
+        "--config", help="Path to the config file", default="config.yaml"
+    )
+    parser.add_argument(
+        "--verbose", action="store_true", help="Print verbose output"
+    )
+    args = parser.parse_args()
+
+    if args.config:
+        CONFIG_PATH = args.config
+        if not Path(CONFIG_PATH).exists():
+            exit(
+                f"Config file {Fore.LIGHTRED_EX}{CONFIG_PATH}{Fore.RESET} does not exist. Exiting"
+            )
+    if args.verbose:
+        VERBOSE_MODE = args.verbose
+        print(f"{Fore.LIGHTYELLOW_EX}Running in verbose mode{Fore.RESET}")
+    yaml_config = process_config_file(CONFIG_PATH)
     WHOAMI_ORACLE = yaml_config["variables"]["user_name"]
     COMMAND_INJECTION_CMD = yaml_config["command_injection"]
     ARGUMENT_INJECTION_CMD = yaml_config["argument_injection"]
@@ -308,4 +332,4 @@ if __name__ == "__main__":
     XSS_CMD = yaml_config["xss"]
     QUERY_PARAMS = yaml_config["variables"]["query_params"]
     HTTP_BASE = yaml_config["variables"]["base_url"]
-    asyncio.run(main(sys.argv[1:]))
+    asyncio.run(main(args))
