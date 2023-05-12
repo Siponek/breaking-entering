@@ -4,10 +4,17 @@
 [php]: https://www.php.net/downloads.php
 [make]: https://www.gnu.org/software/make/
 [chocolatey]: https://chocolatey.org/install
-
+```
+--   ______   ______     __   __     ______   __   __     ______     ______     ______     ______   __     ______     __   __        __    __     ______     __   __    
+--  /\  == \ /\  ___\   /\ "-.\ \   /\__  _\ /\ "-.\ \   /\  ___\   /\  == \   /\  __ \   /\__  _\ /\ \   /\  __ \   /\ "-.\ \      /\ "-./  \   /\  __ \   /\ "-.\ \   
+--  \ \  _-/ \ \  __\   \ \ \-.  \  \/_/\ \/ \ \ \-.  \  \ \  __\   \ \  __<   \ \  __ \  \/_/\ \/ \ \ \  \ \ \/\ \  \ \ \-.  \     \ \ \-./\ \  \ \  __ \  \ \ \-.  \  
+--   \ \_\    \ \_____\  \ \_\\"\_\    \ \_\  \ \_\\"\_\  \ \_____\  \ \_\ \_\  \ \_\ \_\    \ \_\  \ \_\  \ \_____\  \ \_\\"\_\     \ \_\ \ \_\  \ \_\ \_\  \ \_\\"\_\ 
+--    \/_/     \/_____/   \/_/ \/_/     \/_/   \/_/ \/_/   \/_____/   \/_/ /_/   \/_/\/_/     \/_/   \/_/   \/_____/   \/_/ \/_/      \/_/  \/_/   \/_/\/_/   \/_/ \/_/ 
+--                                                                                                                                                                      
+```
 ## Description
 
-PHP web pages that can be used to test shell commands with Python script. It is intended to be used for common pentesting cases.
+This is a Python script with . PHP web pages that can be used to test shell commands. It is intended to be used for common pentesting cases.
 
 For now it only has tests consisting of a:
 
@@ -101,6 +108,8 @@ You can also specify to use --verbose flag to see more details about the test.
 ```bash
 python ./sample_cmdi_test.py --verbose
 ```
+
+![alt text](./Example%20of%20an%20result.jpg)
 
 ## Conclusion
 
