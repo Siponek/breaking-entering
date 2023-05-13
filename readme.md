@@ -4,7 +4,8 @@
 [php]: https://www.php.net/downloads.php
 [make]: https://www.gnu.org/software/make/
 [chocolatey]: https://chocolatey.org/install
-```
+
+```ascii
 --   ______   ______     __   __     ______   __   __     ______     ______     ______     ______   __     ______     __   __        __    __     ______     __   __    
 --  /\  == \ /\  ___\   /\ "-.\ \   /\__  _\ /\ "-.\ \   /\  ___\   /\  == \   /\  __ \   /\__  _\ /\ \   /\  __ \   /\ "-.\ \      /\ "-./  \   /\  __ \   /\ "-.\ \   
 --  \ \  _-/ \ \  __\   \ \ \-.  \  \/_/\ \/ \ \ \-.  \  \ \  __\   \ \  __<   \ \  __ \  \/_/\ \/ \ \ \  \ \ \/\ \  \ \ \-.  \     \ \ \-./\ \  \ \  __ \  \ \ \-.  \  
@@ -12,21 +13,22 @@
 --    \/_/     \/_____/   \/_/ \/_/     \/_/   \/_/ \/_/   \/_____/   \/_/ /_/   \/_/\/_/     \/_/   \/_/   \/_____/   \/_/ \/_/      \/_/  \/_/   \/_/\/_/   \/_/ \/_/ 
 --                                                                                                                                                                      
 ```
+
 ## Description
 
 This is a Python script with . PHP web pages that can be used to test shell commands. It is intended to be used for common pentesting cases.
 
 For now it only has tests consisting of a:
 
-- _Simple_ command injection
-- _Simple_ argument injection
-- _Simple_ blind command incjection
-- _Simple_ xss
+- Command injection
+- Argument injection
+- Blind command incjection
+- Xss
 
 ## Requirements
 
 - [PHP][php] 7.2 or higher
-- [Python][python] 3.8 or higher
+- [Python][python] 3.11 or higher (Should work on 3.8, but you need to install the required packages manually)
 - Python libaries that can be installed with pip:
 
     ```bash
@@ -83,15 +85,19 @@ To modify a variable, simply change the value associated with the key.
 
 ## Command Injection
 
-The command_injection section contains attack payloads for command injection. The available attack types are exec and ping. To modify an attack payload, change the value associated with the key for that attack type.
+The command_injection section contains attack payloads for command injection. The available attack vectors are **exec** and **ping**.
 
 ## Argument Injection
 
-The argument_injection section contains attack payloads for argument injection. The available attack types are find and ping. To modify an attack payload, change the value associated with the key for that attack type.
+The argument_injection section contains attack payloads for argument injection. The available attack vectors are **find** and **ping**.
 
 ## Blind Command Injection
 
-The blind_command_injection section contains attack payloads for blind command injection. The available attack types are find and ping. To modify an attack payload, change the value associated with the key for that attack type.
+The blind_command_injection section contains attack payloads for blind command injection like webshell creation. The available attack vectors are **find** and **ping**.
+
+## Cross-Site Scripting
+
+There is also a xss section that contains attack payloads for cross-site scripting. The available attack vectors are **echo** and **exec**. The problem is that these are diffucult to test, because the response is not visible to the user. The only way to test it is to use a proxy like **Burp Suite** or just seeing if the XSS is possible via insterting the **oracle** name in script incjection.
 
 ## Example Usage
 
@@ -109,7 +115,7 @@ You can also specify to use --verbose flag to see more details about the test.
 python ./sample_cmdi_test.py --verbose
 ```
 
-![alt text](./Example%20of%20an%20result.jpg)
+![alt text](./Example%20of%20an%20result.jpg "Example of an result")
 
 ## Conclusion
 
