@@ -198,6 +198,7 @@ class TestingClass:
 
 
 async def define_testing_type(testing_route: str) -> list:
+    # TODO #2 Automate this with an array of strings and a for loop. Will allow for more testing types.
     if testing_route.find("echo") != -1:
         return ["echo", QUERY_PARAMS["echo"]]
     elif testing_route.find("ping") != -1:

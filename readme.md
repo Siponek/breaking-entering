@@ -71,6 +71,7 @@ The variables section contains variables that are used throughout the configurat
 ```yaml
     user_name: A string that represents the test string to look for in response text.
     command: The name of the command to receive user_name.
+    # To be implemented, e.g. cat /etc/passwd
     folder_to_watch: The folder to watch.
     query_params: A map that contains query parameters for various attack types. The parameters that can be modified include:
     # Keep in mind that Python script will use the first substring that matches the key of the page that is being tested. E.g. ping-escapeshellcmd has both "ping" and "shell" substirngs, but ping comes first, so it will be used.

