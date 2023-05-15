@@ -34,7 +34,7 @@ HTTP_BASE: str = "http://localhost:9000/"
 
 
 def process_config_file(config_file_path: str) -> dict:
-    """Function for processing the config file
+    """Function for processing the config file. Used for replacing the variables in the config file, returning the config file as a dictionary and setting up global variables.
 
     Args:
         config_file_path (str): Path to the config file
@@ -182,6 +182,11 @@ class TestingClass:
                     headers=headers,
                 ) as response:
                     text = await response.text()
+                    if len(text) == 0:
+                        if VERBOSE_MODE:
+                            tqdm.write(
+                                f"{Fore.LIGHTBLUE_EX + url_for_request.split('/')[-1] + Fore.RESET}\t\t{Fore.LIGHTRED_EX + 'EMPTY RESPONSE, page might not work. Marking as passed' + Fore.RESET}"
+                            )
                     if VERBOSE_MODE:
                         tqdm.write(
                             f"Testing {params} {Fore.MAGENTA + url_for_request.split('/')[-1] + Fore.RESET} response:\t\t{Fore.GREEN + text + Fore.RESET}"
@@ -274,22 +279,26 @@ async def main(args):
     # TODO make this async for every route
     with tqdm(total=len(list_of_routes_in_folder), position=0) as pbar1:
         tasks = []
-        for testing_route in list_of_routes_in_folder:
-            pbar1.set_description(
-                f"Testing route: \033[1m{testing_route}\033[0m"
-            )
-            task = asyncio.create_task(
-                TestClass.test_suite(
-                    array_of_dicts=array_of_tests,
-                    http_adress=HTTP_BASE,
-                    file_route=testing_route,
-                    route_type=await define_testing_type(testing_route),
+        try:
+            for testing_route in list_of_routes_in_folder:
+                pbar1.set_description(
+                    f"Testing route: \033[1m{testing_route}\033[0m"
                 )
-            )
-            task.add_done_callback(lambda fut: pbar1.update(1))
-            tasks.append((task))
-            # Here the http_adress could be the base attr for the class since it is global and read from config.yaml
-        await asyncio.gather(*[task for task in tasks])
+                task = asyncio.create_task(
+                    TestClass.test_suite(
+                        array_of_dicts=array_of_tests,
+                        http_adress=HTTP_BASE,
+                        file_route=testing_route,
+                        route_type=await define_testing_type(testing_route),
+                    )
+                )
+                task.add_done_callback(lambda fut: pbar1.update(1))
+                tasks.append((task))
+                # Here the http_adress could be the base attr for the class since it is global and read from config.yaml
+            await asyncio.gather(*[task for task in tasks])
+        except Exception as e:
+            print(e)
+            exit("Error while testing")
         for testing_route in list_of_routes_in_folder:
             print(f"Calculating passed tests for {testing_route}")
             TestClass.calcualte_passed_tests(route=testing_route)
